@@ -40,7 +40,7 @@ public class CounselorEntity {
     @Column(columnDefinition="text") private String targets;
     @Column(columnDefinition="text") private String specialty;
     @Column(columnDefinition="text") private String regions;
-    @Column(length=64)  private String fee;
+    @Column(columnDefinition="text") private String fee;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
