@@ -1,0 +1,32 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/diary_backend
+    username: ${POSTGRES_USER:dev}
+    password: ${POSTGRES_PASSWORD:devpass}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+  jackson:
+    serialization:
+      WRITE_DATES_AS_TIMESTAMPS: false
+
+crawler:
+  kca:
+    baseUrl: "https://counselors.or.kr"
+    listPath: "/KOR/license/supervisor_6.php"
+    timeoutMs: 8000
+    minDelayMs: 800
+    maxDelayMs: 1500
+    maxPages: 200
+    userAgent: "MindNoteCrawler/1.0 (+https://your-service.example) Mozilla/5.0"
+
+logging:
+  level:
+    root: INFO
+    com.example.crawler.kca: DEBUG   # 우리 크롤러 패키지 상세 로그
+  file:
+    name: logs/app.log               # 파일로도 남기기(상대경로)
