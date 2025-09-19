@@ -61,12 +61,6 @@ public class Post {
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
-//    빈 리스트 반환이 아니여서 NPE 터지는 것 막기위해 사용
-    private List<PostImage> images = new ArrayList<>();
-    // 이미지 (0 ~ 3장까지)
-
-    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
     private List<Like> likes = new ArrayList<>();
     // 좋아요
 

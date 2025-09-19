@@ -27,11 +27,10 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.multipart.MultipartFile;
 
 @Tag(name = "게시글 API", description = "게시글 관련 API")
 @RestController
@@ -89,14 +88,13 @@ public class PostController {
         }
     }
 
-    @Operation(summary = "게시글 작성", description = "새로운 게시글을 작성합니다. (이미지 0~3장 업로드 가능)")
-    @PostMapping(consumes = {"multipart/form-data"})
+    @Operation(summary = "게시글 작성", description = "새로운 게시글을 작성합니다.")
+    @PostMapping
     public ResponseEntity<ApiResponse<PostResponse>> createPost(
-            @RequestPart("post") @Valid PostRequest request,
-            @RequestPart(value = "images", required = false) List<MultipartFile> images) {
+            @RequestBody @Valid PostRequest request) {
         try {
             Long userId = getCurrentUserId();
-            PostResponse response = postService.createPost(request, images, userId);
+            PostResponse response = postService.createPost(request, userId);
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(ApiResponse.onSuccess(response));
         } catch (IllegalArgumentException e) {
@@ -108,15 +106,14 @@ public class PostController {
         }
     }
 
-    @Operation(summary = "게시글 수정", description = "기존 게시글을 수정합니다. (이미지 0~3장 업로드 가능)")
-    @PutMapping(value = "/{postId}", consumes = {"multipart/form-data"})
+    @Operation(summary = "게시글 수정", description = "기존 게시글을 수정합니다.")
+    @PutMapping("/{postId}")
     public ResponseEntity<ApiResponse<PostResponse>> updatePost(
             @Parameter(description = "게시글 ID") @PathVariable Long postId,
-            @RequestPart("post") @Valid PostUpdateRequest request,
-            @RequestPart(value = "images", required = false) List<MultipartFile> images) {
+            @RequestBody @Valid PostUpdateRequest request) {
         try {
             Long userId = getCurrentUserId();
-            PostResponse response = postService.updatePost(postId, request, images, userId);
+            PostResponse response = postService.updatePost(postId, request, userId);
             return ResponseEntity.ok(ApiResponse.onSuccess(response));
         } catch (IllegalArgumentException e) {
             if (e.getMessage().contains("권한")) {

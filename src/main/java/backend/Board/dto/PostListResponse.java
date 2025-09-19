@@ -25,7 +25,6 @@ public class PostListResponse {
     private Long commentCount;
     private Long viewCount;
     private LocalDateTime createdAt;
-    private String thumbnailImage;           // 첫 번째 이미지
     private Double redditScore;              // 레딧 알고리즘 스코어 (인기순용)
 
     public static PostListResponse from(Post post) {
@@ -44,8 +43,6 @@ public class PostListResponse {
                 .viewCount(post.getDisclosure() == Disclosure.PUBLIC ?
                         post.getViewCount() : null)
                 .createdAt(post.getCreatedAt())
-                .thumbnailImage(post.getImages().isEmpty() ? null :
-                        post.getImages().get(0).getImageUrl())
                 .redditScore(redditScore)
                 .build();
     }

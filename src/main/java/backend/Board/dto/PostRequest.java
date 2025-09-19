@@ -32,7 +32,4 @@ public class PostRequest {
     @NotNull(message = "공개여부를 선택해주세요.")
     private Disclosure disclosure;
     //  공개 여부
-
-    private List<String> images = new ArrayList<>();
-    //  이미지
 }

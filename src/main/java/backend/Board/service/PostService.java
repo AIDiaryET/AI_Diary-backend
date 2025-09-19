@@ -10,7 +10,6 @@ import backend.Board.dto.PostUpdateRequest;
 import backend.Board.entity.Disclosure;
 import backend.Board.entity.Like;
 import backend.Board.entity.Post;
-import backend.Board.entity.PostImage;
 import backend.Board.repository.LikeRepository;
 import backend.Board.repository.PostRepository;
 import backend.auth.entity.User;
@@ -25,7 +24,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 @Slf4j
 @Service
@@ -36,7 +34,6 @@ public class PostService {
     private final PostRepository postRepository;
     private final LikeRepository likeRepository;
     private final UserService userService;
-    private final PostImageService postImageService;
 
     private Page<Post> getPostsBySortType(PostSortType sortType, Pageable pageable) {
         return switch (sortType) {
@@ -70,14 +67,8 @@ public class PostService {
 
     // 게시글 작성
     @Transactional
-    public PostResponse createPost(PostRequest request, List<MultipartFile> images, Long userId) {
+    public PostResponse createPost(PostRequest request, Long userId) {
         User user = userService.getUserById(userId);
-
-        // 이미지 업로드
-        List<String> imageUrls = List.of();
-        if (images != null && !images.isEmpty()) {
-            imageUrls = postImageService.uploadPostImages(images);
-        }
 
         Post post = Post.builder()
                 .user(user)
@@ -88,32 +79,13 @@ public class PostService {
                 .viewCount(0L)
                 .build();
 
-        // PostImage 엔티티 생성 및 추가
-        if (!imageUrls.isEmpty()) {
-            List<PostImage> postImages = imageUrls.stream()
-                    .map(imageUrl -> PostImage.builder()
-                            .post(post)
-                            .imageUrl(imageUrl)
-                            .build())
-                    .collect(Collectors.toList());
-            post.getImages().addAll(postImages);
-        }
-
-        try {
-            Post savedPost = postRepository.save(post);
-            return PostResponse.from(savedPost);
-        } catch (Exception e) {
-            // 게시글 저장 실패 시 업로드된 이미지 롤백
-            if (!imageUrls.isEmpty()) {
-                postImageService.deleteImages(imageUrls);
-            }
-            throw new RuntimeException("게시글 저장 중 오류가 발생했습니다.", e);
-        }
+        Post savedPost = postRepository.save(post);
+        return PostResponse.from(savedPost);
     }
 
     // 게시글 수정
     @Transactional
-    public PostResponse updatePost(Long postId, PostUpdateRequest request, List<MultipartFile> newImages, Long userId) {
+    public PostResponse updatePost(Long postId, PostUpdateRequest request, Long userId) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
 
@@ -122,51 +94,14 @@ public class PostService {
             throw new IllegalArgumentException("수정 권한이 없습니다.");
         }
 
-        // 기존 이미지 URL 백업 (롤백용)
-        List<String> oldImageUrls = post.getImages().stream()
-                .map(PostImage::getImageUrl)
-                .collect(Collectors.toList());
+        // 게시글 정보 업데이트
+        post.setTitle(request.getTitle());
+        post.setContent(request.getContent());
+        post.setEmotion(request.getEmotion());
+        post.setDisclosure(request.getDisclosure());
 
-        // 새 이미지 업로드
-        List<String> newImageUrls = List.of();
-        if (newImages != null && !newImages.isEmpty()) {
-            newImageUrls = postImageService.uploadPostImages(newImages);
-        }
-
-        try {
-            // 게시글 정보 업데이트
-            post.setTitle(request.getTitle());
-            post.setContent(request.getContent());
-            post.setEmotion(request.getEmotion());
-            post.setDisclosure(request.getDisclosure());
-
-            // 기존 이미지 삭제 후 새 이미지 추가
-            post.getImages().clear();
-            if (!newImageUrls.isEmpty()) {
-                List<PostImage> postImages = newImageUrls.stream()
-                        .map(imageUrl -> PostImage.builder()
-                                .post(post)
-                                .imageUrl(imageUrl)
-                                .build())
-                        .collect(Collectors.toList());
-                post.getImages().addAll(postImages);
-            }
-
-            Post savedPost = postRepository.save(post);
-
-            // 성공 시 기존 이미지 S3에서 삭제
-            if (!oldImageUrls.isEmpty()) {
-                postImageService.deleteImages(oldImageUrls);
-            }
-
-            return PostResponse.from(savedPost);
-        } catch (Exception e) {
-            // 실패 시 새로 업로드된 이미지 롤백
-            if (!newImageUrls.isEmpty()) {
-                postImageService.deleteImages(newImageUrls);
-            }
-            throw new RuntimeException("게시글 수정 중 오류가 발생했습니다.", e);
-        }
+        Post savedPost = postRepository.save(post);
+        return PostResponse.from(savedPost);
     }
 
     // 게시글 삭제
@@ -180,18 +115,8 @@ public class PostService {
             throw new IllegalArgumentException("삭제 권한이 없습니다.");
         }
 
-        // 게시글의 이미지 URL 수집
-        List<String> imageUrls = post.getImages().stream()
-                .map(PostImage::getImageUrl)
-                .collect(Collectors.toList());
-
         // 게시글 삭제
         postRepository.delete(post);
-
-        // S3에서 이미지 삭제
-        if (!imageUrls.isEmpty()) {
-            postImageService.deleteImages(imageUrls);
-        }
     }
 
     // 게시글 좋아요/좋아요 취소

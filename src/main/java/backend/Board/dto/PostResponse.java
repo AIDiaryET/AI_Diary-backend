@@ -3,7 +3,6 @@ package backend.Board.dto;
 import backend.Board.entity.Post;
 import backend.Board.entity.Disclosure;
 import backend.Board.entity.Emotion;
-import backend.Board.entity.PostImage;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,8 +25,7 @@ public class PostResponse {
     private String content;
     private Emotion emotion;
     private Disclosure disclosure;
-    @Builder.Default
-    private List<String> images = new ArrayList<>();
+
     //  게시글 정보
     private Long likeCount;
     @Builder.Default
@@ -45,9 +43,6 @@ public class PostResponse {
                 .content(post.getContent())
                 .emotion(post.getEmotion())
                 .disclosure(post.getDisclosure())
-                .images(post.getImages().stream()
-                        .map(PostImage::getImageUrl)
-                        .toList())
                 // PUBLIC일 때만 소셜 기능 포함
                 .likeCount(post.getDisclosure() == Disclosure.PUBLIC ?
                         (long) post.getLikes().size() : null)
