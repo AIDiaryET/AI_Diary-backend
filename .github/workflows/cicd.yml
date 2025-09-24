@@ -81,7 +81,6 @@ jobs:
                   - ./.env
                 restart: unless-stopped
             YAML
-            fi
 
             # 매 배포 시 .env 생성/갱신
             cat > .env <<'ENV'
