@@ -78,9 +78,7 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
-          source: |
-            docker-compose.yml
-            .env
+          source: "docker-compose.yml,.env"
           target: /srv/app/
           strip_components: 0
           overwrite: true
