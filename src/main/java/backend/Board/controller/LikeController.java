@@ -16,11 +16,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "좋아요 API", description = "통합 좋아요 관련 API")
+@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/v1/likes")
 @RequiredArgsConstructor

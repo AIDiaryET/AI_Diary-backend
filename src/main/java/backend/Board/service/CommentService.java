@@ -112,7 +112,7 @@ public class CommentService {
         }
 
         // 최상위 댓글만 조회 (대댓글은 CommentResponse에서 처리)
-        List<Comment> topLevelComments = commentRepository.findByPostAndParentIsNullOrderByCreatedAtAsc(post);
+        List<Comment> topLevelComments = commentRepository.findByPostWithReplies(post);
 
         return topLevelComments.stream()
                 .map(CommentResponse::from)

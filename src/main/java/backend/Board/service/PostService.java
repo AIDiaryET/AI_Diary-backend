@@ -14,8 +14,10 @@ import backend.Board.repository.LikeRepository;
 import backend.Board.repository.PostRepository;
 import backend.auth.entity.User;
 import backend.auth.service.UserService;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -229,9 +231,9 @@ public class PostService {
     }
 
     /**
-     * 공개 게시글 목록 조회 (검색 기능 포함)
+     * 공개 게시글 목록 조회 (좋아요 상태 포함)
      */
-    public PostPageResponse getPublicPosts(PostSearchRequest request) {
+    public PostPageResponse getPublicPosts(PostSearchRequest request, Long currentUserId) {
         Pageable pageable = PageRequest.of(request.getPage(), request.getSize());
         Page<Post> posts;
 
@@ -244,7 +246,7 @@ public class PostService {
             posts = postRepository.findByDisclosureAndEmotionOrderByCreatedAtDesc(
                     Disclosure.PUBLIC, request.getEmotion(), pageable);
         }
-        // 검색 조건이 있는 경우 -> 새로 추가된 부분
+        // 검색 조건이 있는 경우
         else if (hasSearchCondition(request)) {
             posts = searchPosts(request, pageable);
         }
@@ -253,16 +255,35 @@ public class PostService {
             posts = getPostsBySortType(request.getSortType(), pageable);
         }
 
+        // 사용자 좋아요 상태를 배치로 조회 (N+1 문제 해결)
+        final Set<Long> likedPostIds; // final로 선언
+        if (currentUserId != null) {
+            List<Long> postIds = posts.getContent().stream()
+                    .map(Post::getId)
+                    .collect(Collectors.toList());
+            likedPostIds = likeRepository.findLikedPostIdsByUserAndPosts(currentUserId, postIds);
+        } else {
+            likedPostIds = Collections.emptySet();
+        }
+
         // 인기순의 경우 레딧 알고리즘 적용
         List<PostListResponse> postResponses;
         if (request.getSortType() == PostSortType.POPULAR) {
             postResponses = posts.getContent().stream()
-                    .map(PostListResponse::from)
+                    .map(post -> {
+                        PostListResponse response = PostListResponse.from(post);
+                        response.setLikedByCurrentUser(likedPostIds.contains(post.getId()));
+                        return response;
+                    })
                     .sorted(Comparator.comparing(PostListResponse::getRedditScore).reversed())
                     .collect(Collectors.toList());
         } else {
             postResponses = posts.getContent().stream()
-                    .map(PostListResponse::from)
+                    .map(post -> {
+                        PostListResponse response = PostListResponse.from(post);
+                        response.setLikedByCurrentUser(likedPostIds.contains(post.getId()));
+                        return response;
+                    })
                     .collect(Collectors.toList());
         }
 
@@ -278,7 +299,36 @@ public class PostService {
     }
 
     /**
-     * 개인 일기장 조회 (검색 기능 포함)
+     * 인기 게시글 조회 (좋아요 상태 포함)
+     */
+    public List<PostListResponse> getPopularPosts(Long currentUserId) {
+        Pageable pageable = PageRequest.of(0, 50);
+        Page<Post> recentPosts = postRepository.findByDisclosureOrderByCreatedAtDesc(Disclosure.PUBLIC, pageable);
+
+        // 사용자 좋아요 상태를 배치로 조회
+        final Set<Long> likedPostIds; // final로 선언
+        if (currentUserId != null) {
+            List<Long> postIds = recentPosts.getContent().stream()
+                    .map(Post::getId)
+                    .collect(Collectors.toList());
+            likedPostIds = likeRepository.findLikedPostIdsByUserAndPosts(currentUserId, postIds);
+        } else {
+            likedPostIds = Collections.emptySet();
+        }
+
+        return recentPosts.getContent().stream()
+                .map(post -> {
+                    PostListResponse response = PostListResponse.from(post);
+                    response.setLikedByCurrentUser(likedPostIds.contains(post.getId()));
+                    return response;
+                })
+                .sorted(Comparator.comparing(PostListResponse::getRedditScore).reversed())
+                .limit(4)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 개인 일기장 조회 (좋아요 상태 포함)
      */
     public PostPageResponse getMyPosts(Long userId, PostSearchRequest request) {
         Pageable pageable = PageRequest.of(request.getPage(), request.getSize());
@@ -287,14 +337,24 @@ public class PostService {
         if (request.getDate() != null) {
             posts = postRepository.findByUserIdAndDate(userId, request.getDate(), pageable);
         } else if (request.getKeyword() != null && !request.getKeyword().trim().isEmpty()) {
-            // 개인 일기장에서도 키워드 검색 가능
             posts = postRepository.findByUserIdAndKeyword(userId, request.getKeyword().trim(), pageable);
         } else {
             posts = postRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable);
         }
 
+        // 개인 일기장에서는 모든 게시글이 본인 것이므로 좋아요 상태는 항상 확인 필요
+        final Set<Long> likedPostIds; // final로 선언
+        List<Long> postIds = posts.getContent().stream()
+                .map(Post::getId)
+                .collect(Collectors.toList());
+        likedPostIds = likeRepository.findLikedPostIdsByUserAndPosts(userId, postIds);
+
         List<PostListResponse> postResponses = posts.getContent().stream()
-                .map(PostListResponse::from)
+                .map(post -> {
+                    PostListResponse response = PostListResponse.from(post);
+                    response.setLikedByCurrentUser(likedPostIds.contains(post.getId()));
+                    return response;
+                })
                 .collect(Collectors.toList());
 
         return PostPageResponse.builder()

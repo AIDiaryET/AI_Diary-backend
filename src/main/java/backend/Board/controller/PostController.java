@@ -21,6 +21,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -33,6 +34,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "게시글 API", description = "게시글 관련 API")
+@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/v1/posts")
 @RequiredArgsConstructor
@@ -46,7 +48,8 @@ public class PostController {
     public ResponseEntity<ApiResponse<PostPageResponse>> getPublicPosts(
             @ModelAttribute PostSearchRequest request) {
         try {
-            PostPageResponse response = postService.getPublicPosts(request);
+            Long currentUserId = getCurrentUserIdOrNull();
+            PostPageResponse response = postService.getPublicPosts(request, currentUserId);
             return ResponseEntity.ok(ApiResponse.onSuccess(response));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -177,7 +180,8 @@ public class PostController {
     @GetMapping("/popular")
     public ResponseEntity<ApiResponse<List<PostListResponse>>> getPopularPosts() {
         try {
-            List<PostListResponse> response = postService.getPopularPosts();
+            Long currentUserId = getCurrentUserIdOrNull();
+            List<PostListResponse> response = postService.getPopularPosts(currentUserId);
             return ResponseEntity.ok(ApiResponse.onSuccess(response));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -196,6 +200,8 @@ public class PostController {
             @RequestParam(defaultValue = "16") int size,
             @RequestParam(defaultValue = "DATE") PostSortType sortType) {
         try {
+            Long currentUserId = getCurrentUserIdOrNull(); // 추가
+
             PostSearchRequest request = PostSearchRequest.builder()
                     .keyword(keyword)
                     .title(title)
@@ -206,7 +212,7 @@ public class PostController {
                     .sortType(sortType)
                     .build();
 
-            PostPageResponse response = postService.getPublicPosts(request);
+            PostPageResponse response = postService.getPublicPosts(request, currentUserId); // 파라미터 추가
             return ResponseEntity.ok(ApiResponse.onSuccess(response));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

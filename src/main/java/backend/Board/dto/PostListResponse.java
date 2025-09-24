@@ -26,6 +26,7 @@ public class PostListResponse {
     private Long viewCount;
     private LocalDateTime createdAt;
     private Double redditScore;              // 레딧 알고리즘 스코어 (인기순용)
+    private Boolean likedByCurrentUser;
 
     public static PostListResponse from(Post post) {
         double redditScore = calculateRedditScore(post);
@@ -44,6 +45,7 @@ public class PostListResponse {
                         post.getViewCount() : null)
                 .createdAt(post.getCreatedAt())
                 .redditScore(redditScore)
+                .likedByCurrentUser(false)
                 .build();
     }
 
