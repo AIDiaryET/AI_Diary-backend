@@ -79,7 +79,7 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           source: "docker-compose.yml,.env"
-          target: /srv/app/
+          target: ~/app/
           strip_components: 0
           overwrite: true
 
@@ -92,25 +92,9 @@ jobs:
           script_stop: true
           script: |
             set -euo pipefail
-
-            # 디렉터리 준비
-            sudo install -d -m 0755 /srv/app
-
-            # 홈에 업로드된 파일을 /srv/app으로 이동 (root 권한으로)
-            sudo mv ~/deploy_upload/docker-compose.yml /srv/app/docker-compose.yml
-            sudo mv ~/deploy_upload/.env              /srv/app/.env
-
-            # 권한/소유권 정리 (보안상 .env는 600 권장)
-            sudo chown root:root /srv/app/docker-compose.yml /srv/app/.env
-            sudo chmod 644 /srv/app/docker-compose.yml
-            sudo chmod 600 /srv/app/.env
-
-            # 유효성 체크
-            sudo docker compose -f /srv/app/docker-compose.yml config
-
-            echo "Docker login & pull..."
+            cd ~/app
+            docker compose config
             echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USER }}" --password-stdin
-            sudo docker compose -f /srv/app/docker-compose.yml pull
-            sudo docker compose -f /srv/app/docker-compose.yml up -d --remove-orphans
+            docker compose pull
+            docker compose up -d --remove-orphans
 
-            echo "Deployed ${{ vars.APP_NAME }}:${{ env.TAG }}"
