@@ -78,9 +78,10 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
-          source: "docker-compose.yml,.env"
-          target: ~/app/
-          strip_components: 0
+          source: |
+            docker-compose.yml
+            .env
+          target: /home/ubuntu/app/
           overwrite: true
 
       - name: Deploy on EC2
@@ -92,7 +93,7 @@ jobs:
           script_stop: true
           script: |
             set -euo pipefail
-            cd ~/app
+            cd /home/ubuntu/app
             docker compose config
             echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USER }}" --password-stdin
             docker compose pull
