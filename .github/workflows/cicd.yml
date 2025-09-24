@@ -92,12 +92,12 @@ jobs:
             APP_TAG=${{ env.TAG }}
             APP_PORT=${{ vars.APP_PORT }}
 
-            # 애플리케이션 환경변수들 (필요한 것만 추가)
-            SPRING_PROFILES_ACTIVE=prod
-            # SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/appdb
-            # SPRING_DATASOURCE_USERNAME=mindnote
-            # SPRING_DATASOURCE_PASSWORD=mindnote1234
-            # JWT_SECRET='MsChQ6aMD1KI7Rk/pjcKhDwzZShAiZ+vrsOJ5Xi5Y/Zciiy1kqVZdjBvxad21stUNkk+Q7fyEdHqiuoyQftV7A=='
+            # --- Spring / DB 환경변수 ---
+            # SPRING_PROFILES_ACTIVE=prod
+            POSTGRES_URL=${{ secrets.POSTGRES_URL }}
+            POSTGRES_USER=${{ secrets.POSTGRES_USER }}
+            POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
             ENV
 
             # 최신 이미지 받아서 재기동
