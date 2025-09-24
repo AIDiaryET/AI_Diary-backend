@@ -68,11 +68,9 @@ jobs:
           script: |
             set -e
             sudo mkdir -p /srv/app
-            cd /srv/app
 
-            # compose 파일이 없다면 최초 1회 복사
-            if [ ! -f compose.yml ]; then
-              cat > compose.yml <<'YAML'
+            # compose.yml 생성/갱신 (sudo tee 사용)
+            sudo tee /srv/app/compose.yml > /dev/null <<'YAML'
             services:
               app:
                 image: ${DOCKERHUB_USER}/${APP_NAME}:${APP_TAG}
