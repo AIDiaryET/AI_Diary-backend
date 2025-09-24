@@ -58,7 +58,35 @@ jobs:
       - name: Read tag
         run: echo "TAG=$(cat tag.txt)" >> $GITHUB_ENV
 
-      - name: Deploy to EC2 via SSH
+      - name: Create .env file
+        run: |
+          : > .env
+          printf "DOCKERHUB_USER=%s\n" "${{ secrets.DOCKERHUB_USER }}" >> .env
+          printf "APP_NAME=%s\n"        "${{ vars.APP_NAME }}" >> .env
+          printf "APP_TAG=%s\n"         "${{ env.TAG }}" >> .env
+          printf "APP_PORT=%s\n"        "${{ vars.APP_PORT }}" >> .env
+          printf "\n# --- Spring / DB ---\n" >> .env
+          # printf "SPRING_PROFILES_ACTIVE=%s\n" "prod" >> .env   # 필요시 주석 해제
+          printf "POSTGRES_URL=%s\n"     "${{ secrets.POSTGRES_URL }}" >> .env
+          printf "POSTGRES_USER=%s\n"    "${{ secrets.POSTGRES_USER }}" >> .env
+          printf "POSTGRES_PASSWORD=%s\n" "${{ secrets.POSTGRES_PASSWORD }}" >> .env
+          printf "JWT_SECRET=%s\n"       "${{ secrets.JWT_SECRET }}" >> .env
+        
+      - name: Upload compose & env to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          source: |
+            docker-compose.yml
+            .env
+          target: /srv/app/
+          strip_components: 0
+          overwrite: true
+
+      # SSH 접속하여 compose pull/up 실행 
+      - name: Deploy on EC2
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -67,44 +95,12 @@ jobs:
           script_stop: true
           script: |
             set -euo pipefail
-
-            sudo mkdir -p /srv/app
-
-            # ---- docker-compose.yml ----
-            sudo tee /srv/app/docker-compose.yml >/dev/null <<-'YAML'
-            version: "3.9"
-            services:
-              app:
-                image: "${DOCKERHUB_USER}/${APP_NAME}:${APP_TAG}"
-                container_name: "${APP_NAME}"
-                  ports:  
-                    - "${APP_PORT:-8080}:8080"
-                  env_file:
-                    - /srv/app/.env
-                  restart: unless-stopped
-                  YAML
-            # ---- .env ----
-            sudo tee /srv/app/.env >/dev/null <<-'ENV'
-              DOCKERHUB_USER=${{ secrets.DOCKERHUB_USER }}
-              APP_NAME=${{ vars.APP_NAME }}
-              APP_TAG=${{ env.TAG }}
-              APP_PORT=${{ vars.APP_PORT }}
-              
-              # --- Spring / DB ---
-              # SPRING_PROFILES_ACTIVE=prod
-              POSTGRES_URL=${{ secrets.POSTGRES_URL }}
-              POSTGRES_USER=${{ secrets.POSTGRES_USER }}
-              POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
-              JWT_SECRET=${{ secrets.JWT_SECRET }}
-            ENV
-            
+            sudo install -d -m 0755 /srv/app
             # 유효성 체크
             sudo docker compose -f /srv/app/docker-compose.yml config
-            
             echo "Docker login & pull..."
             echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USER }}" --password-stdin
             sudo docker compose -f /srv/app/docker-compose.yml pull
             sudo docker compose -f /srv/app/docker-compose.yml up -d --remove-orphans
-            
             echo "Deployed ${{ vars.APP_NAME }}:${{ env.TAG }}"
 
