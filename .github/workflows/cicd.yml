@@ -70,7 +70,7 @@ jobs:
             sudo mkdir -p /srv/app
 
             # compose.yml 생성/갱신 (sudo tee 사용)
-            sudo tee /srv/app/compose.yml > /dev/null <<'YAML'
+            sudo tee /srv/app/docker-compose.yml > /dev/null <<'YAML'
             services:
               app:
                 image: ${DOCKERHUB_USER}/${APP_NAME}:${APP_TAG}
@@ -78,12 +78,12 @@ jobs:
                 ports:
                   - "${APP_PORT:-8080}:8080"
                 env_file:
-                  - ./.env
+                  - /srv/app/.env
                 restart: unless-stopped
             YAML
 
             # 매 배포 시 .env 생성/갱신
-            cat > .env <<'ENV'
+            sudo tee /srv/app/.env > /dev/null <<'ENV'
             DOCKERHUB_USER=${{ secrets.DOCKERHUB_USER }}
             APP_NAME=${{ vars.APP_NAME }}
             APP_TAG=${{ env.TAG }}
@@ -100,7 +100,7 @@ jobs:
             # 최신 이미지 받아서 재기동
             echo "Docker login & pull..."
             echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USER }}" --password-stdin
-            docker compose pull
-            docker compose up -d --remove-orphans
+            sudo docker compose -f /srv/app/docker-compose.yml pull
+            sudo docker compose -f /srv/app/docker-compose.yml up -d --remove-orphans
 
             echo "Deployed ${APP_NAME}:${{ env.TAG }}"
