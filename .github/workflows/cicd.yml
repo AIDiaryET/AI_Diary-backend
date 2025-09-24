@@ -66,48 +66,45 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           script_stop: true
           script: |
-            set -e
+            set -euo pipefail
+
             sudo mkdir -p /srv/app
 
-            # compose.yml 생성/갱신 (sudo tee 사용)
-            sudo tee /srv/app/docker-compose.yml >/dev/null <<'YAML'
+            # ---- docker-compose.yml ----
+            sudo tee /srv/app/docker-compose.yml >/dev/null <<-'YAML'
             version: "3.9"
             services:
               app:
                 image: "${DOCKERHUB_USER}/${APP_NAME}:${APP_TAG}"
                 container_name: "${APP_NAME}"
-                ports:
-                  - "${APP_PORT:-8080}:8080"
-                env_file:
-                  - /srv/app/.env
-                restart: unless-stopped
-            YAML
-
-            # 혹시 모를 BOM 제거
-            sudo sed -i '1s/^\xEF\xBB\xBF//' /srv/app/docker-compose.yml
-
-            # 유효성 재검증
-            sudo docker compose -f /srv/app/docker-compose.yml config
-
-            # 매 배포 시 .env 생성/갱신
-            sudo tee /srv/app/.env > /dev/null <<'ENV'
-            DOCKERHUB_USER=${{ secrets.DOCKERHUB_USER }}
-            APP_NAME=${{ vars.APP_NAME }}
-            APP_TAG=${{ env.TAG }}
-            APP_PORT=${{ vars.APP_PORT }}
-
-            # --- Spring / DB 환경변수 ---
-            # SPRING_PROFILES_ACTIVE=prod
-            POSTGRES_URL=${{ secrets.POSTGRES_URL }}
-            POSTGRES_USER=${{ secrets.POSTGRES_USER }}
-            POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
-            JWT_SECRET=${{ secrets.JWT_SECRET }}
+                  ports:  
+                    - "${APP_PORT:-8080}:8080"
+                  env_file:
+                    - /srv/app/.env
+                  restart: unless-stopped
+                  YAML
+            # ---- .env ----
+            sudo tee /srv/app/.env >/dev/null <<-'ENV'
+              DOCKERHUB_USER=${{ secrets.DOCKERHUB_USER }}
+              APP_NAME=${{ vars.APP_NAME }}
+              APP_TAG=${{ env.TAG }}
+              APP_PORT=${{ vars.APP_PORT }}
+              
+              # --- Spring / DB ---
+              # SPRING_PROFILES_ACTIVE=prod
+              POSTGRES_URL=${{ secrets.POSTGRES_URL }}
+              POSTGRES_USER=${{ secrets.POSTGRES_USER }}
+              POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+              JWT_SECRET=${{ secrets.JWT_SECRET }}
             ENV
-
-            # 최신 이미지 받아서 재기동
+            
+            # 유효성 체크
+            sudo docker compose -f /srv/app/docker-compose.yml config
+            
             echo "Docker login & pull..."
             echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USER }}" --password-stdin
             sudo docker compose -f /srv/app/docker-compose.yml pull
             sudo docker compose -f /srv/app/docker-compose.yml up -d --remove-orphans
+            
+            echo "Deployed ${{ vars.APP_NAME }}:${{ env.TAG }}"
 
-            echo "Deployed ${APP_NAME}:${{ env.TAG }}"
