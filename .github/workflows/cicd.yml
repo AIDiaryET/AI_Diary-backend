@@ -1,0 +1,109 @@
+name: CI-CD 
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Build jar
+        run: |
+          chmod +x ./gradlew || true
+          ./gradlew --no-daemon clean bootJar
+
+      - name: Set image tag
+        run: echo "APP_TAG=${{ github.run_number }}-${{ github.sha }}" >> $GITHUB_ENV
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USER }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and Push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USER }}/${{ vars.APP_NAME }}:${{ env.APP_TAG }}
+            ${{ secrets.DOCKERHUB_USER }}/${{ vars.APP_NAME }}:latest
+
+      - name: Save tag
+        run: echo "${{ env.APP_TAG }}" > tag.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: image-tag
+          path: tag.txt
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: image-tag
+
+      - name: Read tag
+        run: echo "TAG=$(cat tag.txt)" >> $GITHUB_ENV
+
+      - name: Deploy to EC2 via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script_stop: true
+          script: |
+            set -e
+            sudo mkdir -p /srv/app
+            cd /srv/app
+
+            # compose 파일이 없다면 최초 1회 복사
+            if [ ! -f compose.yml ]; then
+              cat > compose.yml <<'YAML'
+            services:
+              app:
+                image: ${DOCKERHUB_USER}/${APP_NAME}:${APP_TAG}
+                container_name: ${APP_NAME}
+                ports:
+                  - "${APP_PORT:-8080}:8080"
+                env_file:
+                  - ./.env
+                restart: unless-stopped
+            YAML
+            fi
+
+            # 매 배포 시 .env 생성/갱신
+            cat > .env <<'ENV'
+            DOCKERHUB_USER=${{ secrets.DOCKERHUB_USER }}
+            APP_NAME=${{ vars.APP_NAME }}
+            APP_TAG=${{ env.TAG }}
+            APP_PORT=${{ vars.APP_PORT }}
+
+            # 애플리케이션 환경변수들 (필요한 것만 추가)
+            SPRING_PROFILES_ACTIVE=prod
+            # SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/appdb
+            # SPRING_DATASOURCE_USERNAME=mindnote
+            # SPRING_DATASOURCE_PASSWORD=mindnote1234
+            # JWT_SECRET='MsChQ6aMD1KI7Rk/pjcKhDwzZShAiZ+vrsOJ5Xi5Y/Zciiy1kqVZdjBvxad21stUNkk+Q7fyEdHqiuoyQftV7A=='
+            ENV
+
+            # 최신 이미지 받아서 재기동
+            echo "Docker login & pull..."
+            echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USER }}" --password-stdin
+            docker compose pull
+            docker compose up -d --remove-orphans
+
+            echo "Deployed ${APP_NAME}:${{ env.TAG }}"
