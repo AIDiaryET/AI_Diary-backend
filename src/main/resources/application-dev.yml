@@ -10,9 +10,9 @@ spring:
 
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: ${POSTGRES_URL}
-    username: ${POSTGRES_USER}
-    password: ${POSTGRES_PASSWORD}
+    url: jdbc:postgresql://localhost:5432/diary_backend
+    username: ${POSTGRES_USER_L}
+    password: ${POSTGRES_PASSWORD_L}
     hikari:
       maximum-pool-size: 5
       minimum-idle: 2
