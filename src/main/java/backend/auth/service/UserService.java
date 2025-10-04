@@ -71,7 +71,7 @@ public class UserService {
         }
 
         // 닉네임 중복 확인
-        if (userRepository.existsByNickName(nickName)) {
+        if (userRepository.existsByNickname(nickName)) {
             throw new IllegalArgumentException("이미 사용 중인 닉네임입니다.");
         }
 
@@ -85,7 +85,7 @@ public class UserService {
         User user = User.builder()
                 .email(email)
                 .password(encodedPassword)
-                .nickName(nickName)
+                .nickname(nickName)
                 .build();
 
         return userRepository.save(user);
@@ -95,8 +95,8 @@ public class UserService {
         return userRepository.existsByEmail(email);
     }
 
-    public boolean existsByNickName(String nickName) {
-        return userRepository.existsByNickName(nickName);
+    public boolean existsByNickname(String nickname) {
+        return userRepository.existsByNickname(nickname);
     }
 
     public Long getAuthenticatedUserId() {

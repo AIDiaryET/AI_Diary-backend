@@ -53,7 +53,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 
     // 통합 키워드 검색 (제목, 내용, 닉네임)
     @Query("SELECT p FROM Post p WHERE p.disclosure = :disclosure AND " +
-            "(p.title LIKE %:keyword% OR p.content LIKE %:keyword% OR p.user.nickName LIKE %:keyword%) " +
+            "(p.title LIKE %:keyword% OR p.content LIKE %:keyword% OR p.user.nickname LIKE %:keyword%) " +
             "ORDER BY p.createdAt DESC")
     Page<Post> findByDisclosureAndKeyword(@Param("disclosure") Disclosure disclosure,
                                           @Param("keyword") String keyword,
@@ -74,7 +74,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
                                           Pageable pageable);
 
     // 닉네임 검색
-    @Query("SELECT p FROM Post p WHERE p.disclosure = :disclosure AND p.user.nickName LIKE %:nickname% " +
+    @Query("SELECT p FROM Post p WHERE p.disclosure = :disclosure AND p.user.nickname LIKE %:nickname% " +
             "ORDER BY p.createdAt DESC")
     Page<Post> findByDisclosureAndNickname(@Param("disclosure") Disclosure disclosure,
                                            @Param("nickname") String nickname,
@@ -91,7 +91,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 
     // 복합 검색 (제목 + 닉네임)
     @Query("SELECT p FROM Post p WHERE p.disclosure = :disclosure AND " +
-            "(p.title LIKE %:title% AND p.user.nickName LIKE %:nickname%) " +
+            "(p.title LIKE %:title% AND p.user.nickname LIKE %:nickname%) " +
             "ORDER BY p.createdAt DESC")
     Page<Post> findByDisclosureAndTitleAndNickname(@Param("disclosure") Disclosure disclosure,
                                                    @Param("title") String title,

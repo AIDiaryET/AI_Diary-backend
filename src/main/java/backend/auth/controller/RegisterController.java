@@ -50,7 +50,7 @@ public class RegisterController {
             }
 
             // 닉네임 중복 확인
-            if (userService.existsByNickName(request.getNickName())) {
+            if (userService.existsByNickname(request.getNickName())) {
                 return new ResponseEntity<>(
                         ApiResponse.onFailure("NICKNAME_EXISTS", "이미 사용 중인 닉네임입니다."),
                         HttpStatus.BAD_REQUEST
