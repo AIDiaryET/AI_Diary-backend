@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>토스페이먼츠 결제 테스트</title>
+    <script src="https://js.tosspayments.com/v1/payment"></script>
+</head>
+<body>
+<div style="padding: 20px; max-width: 600px; margin: 0 auto;">
+    <h1>토스페이먼츠 결제 테스트</h1>
+
+    <div style="margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
+        <h3>결제 정보</h3>
+        <p><strong>상품명:</strong> 테스트 상품</p>
+        <p><strong>결제 금액:</strong> 1,000원</p>
+    </div>
+
+    <button id="payment-button" style="
+            width: 100%;
+            padding: 15px;
+            background: #3065AC;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        ">결제하기</button>
+
+    <div id="console-log" style="
+            margin-top: 20px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #dee2e6;
+        "></div>
+</div>
+
+<script>
+    const clientKey = "test_ck_DnyRpQWGrNDy9KdjloBL3Kwv1M9E";
+    let tossPayments = null;
+
+    function addLog(message) {
+        const logDiv = document.getElementById('console-log');
+        const now = new Date().toLocaleTimeString();
+        logDiv.innerHTML += `[${now}] ${message}<br>`;
+        logDiv.scrollTop = logDiv.scrollHeight;
+        console.log(message);
+    }
+
+    function generateOrderId() {
+        return 'order_' + new Date().getTime() + '_' + Math.random().toString(36).substr(2, 9);
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        addLog("페이지 로드 완료");
+        initializeTossPayments();
+    });
+
+    function initializeTossPayments() {
+        try {
+            addLog("TossPayments 초기화 시작...");
+
+            // TossPayments 사용 가능 여부 확인
+            if (typeof TossPayments === 'undefined') {
+                throw new Error('TossPayments SDK가 로드되지 않았습니다.');
+            }
+
+            tossPayments = TossPayments(clientKey);
+            addLog("TossPayments 초기화 성공");
+            addLog("tossPayments 타입: " + typeof tossPayments);
+
+            if (tossPayments && typeof tossPayments.requestPayment === 'function') {
+                addLog("requestPayment 메서드 사용 가능");
+            } else {
+                addLog("requestPayment 메서드를 찾을 수 없음");
+            }
+
+            const paymentButton = document.getElementById('payment-button');
+            paymentButton.disabled = false;
+            paymentButton.style.opacity = '1';
+
+        } catch (error) {
+            addLog("초기화 실패: " + error.message);
+            console.error("TossPayments 초기화 실패:", error);
+        }
+    }
+
+    async function requestPayment() {
+        try {
+            addLog("결제 요청 시작...");
+
+            // TossPayments 초기화 상태 확인
+            if (!tossPayments) {
+                throw new Error('TossPayments가 초기화되지 않았습니다');
+            }
+
+            if (typeof tossPayments.requestPayment !== 'function') {
+                throw new Error('requestPayment 메서드를 사용할 수 없습니다');
+            }
+
+            const orderId = generateOrderId();
+            addLog("주문 ID 생성: " + orderId);
+
+            const paymentData = {
+                amount: 1000,
+                orderId: orderId,
+                orderName: "테스트 상품",
+                customerName: "김테스트",
+                successUrl: "http://localhost:8080/payment/success",
+                failUrl: "http://localhost:8080/payment/fail",
+            };
+
+            addLog("결제 데이터: " + JSON.stringify(paymentData));
+            addLog("결제 요청 중...");
+
+            await tossPayments.requestPayment('카드', paymentData);
+            addLog("결제 요청 완료");
+
+        } catch (error) {
+            addLog("결제 요청 실패: " + error.message);
+            console.error("결제 요청 실패:", error);
+            alert("결제 요청에 실패했습니다: " + error.message);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('payment-button').addEventListener('click', function() {
+            addLog("결제 버튼 클릭");
+            requestPayment();
+        });
+    });
+</script>
+</body>
+</html>
