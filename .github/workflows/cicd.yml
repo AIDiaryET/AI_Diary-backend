@@ -74,6 +74,8 @@ jobs:
           printf "KAKAO_REDIRECT_URL=%s\n"       "${{ secrets.KAKAO_REDIRECT_URL }}" >> .env
           printf "TOSS_CLIENT_KEY=%s\n"       "${{ secrets.TOSS_CLIENT_KEY }}" >> .env
           printf "TOSS_SECRET_KEY=%s\n"       "${{ secrets.TOSS_SECRET_KEY }}" >> .env
+          printf "TOSS_SUCCESS_URL=%s\n"       "${{ secrets.TOSS_SUCCESS_URL }}" >> .env
+          printf "TOSS_FAIL_URL=%s\n"       "${{ secrets.TOSS_FAIL_URL }}" >> .env
           printf "JWT_SECRET=%s\n"       "${{ secrets.JWT_SECRET }}" >> .env
         
       - name: Upload compose & env to EC2
