@@ -27,7 +27,7 @@ spring:
 
 kakao:
   client-id: 4e0c59caebb74f7aa52dd26325f55b92
-  redirect-uri: http://localhost:8080/auth/kakao/callback
+  redirect-url: http://localhost:8080/auth/kakao/callback
 
 logging:
   level:
