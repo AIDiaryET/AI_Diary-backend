@@ -27,11 +27,11 @@ spring:
 
 kakao:
   client-id: ${KAKAO_CLIENT_ID}
-  redirect-url: ${KAKAO_REDIRECT_URL:http://localhost:8080/auth/kakao/callback}
+  redirect-url: ${KAKAO_REDIRECT_URL}
 
 toss:
   payments:
     client-key: ${TOSS_CLIENT_KEY}
     secret-key: ${TOSS_SECRET_KEY}
-    success-url: ${TOSS_SUCCESS_URL:http://localhost:8080/payment/success}
-    fail-url: ${TOSS_FAIL_URL:http://localhost:8080/payment/fail}
+    success-url: ${TOSS_SUCCESS_URL}
+    fail-url: ${TOSS_FAIL_URL}
