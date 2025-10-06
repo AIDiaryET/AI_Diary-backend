@@ -23,8 +23,8 @@ public class KakaoService {
     @Value("${kakao.client-id}")
     private String clientId;
 
-    @Value("${kakao.redirect-uri}")
-    private String redirectUri;
+    @Value("${kakao.redirect-url}")
+    private String redirectUrl;
 
     private static final String TOKEN_URL = "https://kauth.kakao.com/oauth/token";
     private static final String USER_INFO_URL = "https://kapi.kakao.com/v2/user/me";
@@ -42,10 +42,10 @@ public class KakaoService {
 
     public String getAuthUrl() {
         try {
-            String encodedRedirectUri = URLEncoder.encode(redirectUri, StandardCharsets.UTF_8);
+            String encodedRedirectUrl = URLEncoder.encode(redirectUrl, StandardCharsets.UTF_8);
             String authUrl = AUTH_URL +
                     "?client_id=" + clientId +
-                    "&redirect_uri=" + encodedRedirectUri +
+                    "&redirect_url=" + encodedRedirectUrl +
                     "&response_type=code" +
                     "&scope=profile_nickname,profile_image";
 
@@ -63,12 +63,12 @@ public class KakaoService {
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("grant_type", "authorization_code");
         params.add("client_id", clientId);
-        params.add("redirect_uri", redirectUri);
+        params.add("redirect_url", redirectUrl);
         params.add("code", code);
 
         try {
             KakaoTokenResponse response = webClient.post()
-                    .uri(TOKEN_URL)
+                    .url(TOKEN_URL)
                     .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED_VALUE)
                     .body(BodyInserters.fromFormData(params))
                     .retrieve()
@@ -90,7 +90,7 @@ public class KakaoService {
 
         try {
             KakaoUserInfo userInfo = webClient.get()
-                    .uri(USER_INFO_URL)
+                    .url(USER_INFO_URL)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
                     .retrieve()
                     .bodyToMono(KakaoUserInfo.class)
