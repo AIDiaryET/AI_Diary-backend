@@ -42,10 +42,10 @@ public class KakaoService {
 
     public String getAuthUrl() {
         try {
-            String encodedRedirectUrl = URLEncoder.encode(redirectUrl, StandardCharsets.UTF_8);
+            String encodedRedirectUri = URLEncoder.encode(redirectUrl, StandardCharsets.UTF_8);
             String authUrl = AUTH_URL +
                     "?client_id=" + clientId +
-                    "&redirect_url=" + encodedRedirectUrl +
+                    "&redirect_uri=" + encodedRedirectUri +
                     "&response_type=code" +
                     "&scope=profile_nickname,profile_image";
 
@@ -63,12 +63,12 @@ public class KakaoService {
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("grant_type", "authorization_code");
         params.add("client_id", clientId);
-        params.add("redirect_url", redirectUrl);
+        params.add("redirect_uri", redirectUrl);
         params.add("code", code);
 
         try {
             KakaoTokenResponse response = webClient.post()
-                    .url(TOKEN_URL)
+                    .uri(TOKEN_URL)
                     .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED_VALUE)
                     .body(BodyInserters.fromFormData(params))
                     .retrieve()
@@ -90,7 +90,7 @@ public class KakaoService {
 
         try {
             KakaoUserInfo userInfo = webClient.get()
-                    .url(USER_INFO_URL)
+                    .uri(USER_INFO_URL)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
                     .retrieve()
                     .bodyToMono(KakaoUserInfo.class)
