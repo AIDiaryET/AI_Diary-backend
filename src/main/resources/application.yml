@@ -21,6 +21,19 @@ spring:
     default-property-inclusion: non_null
     deserialization:
       fail-on-unknown-properties: false
+    serialization:
+      WRITE_DATES_AS_TIMESTAMPS: false
+
+crawler:
+  kca:
+    baseUrl: "https://counselors.or.kr"
+    listPath: "/KOR/license/supervisor_6.php"
+    timeoutMs: 8000
+    minDelayMs: 800
+    maxDelayMs: 1500
+    maxPages: 200
+    userAgent: "MindNoteCrawler/1.0 (+https://your-service.example) Mozilla/5.0"
+
 
   jwt:
     secret: ${JWT_SECRET}
@@ -35,3 +48,8 @@ toss:
     secret-key: ${TOSS_SECRET_KEY}
     success-url: ${TOSS_SUCCESS_URL}
     fail-url: ${TOSS_FAIL_URL}
+
+logging:
+  level:
+    root: INFO
+    backend.crawler.kca: DEBUG
