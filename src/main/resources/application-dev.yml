@@ -27,7 +27,7 @@ spring:
 
 kakao:
   client-id: 4e0c59caebb74f7aa52dd26325f55b92
-  redirect-uri: http://localhost:8080/auth/kakao/callback
+  redirect-url: http://localhost:8080/auth/kakao/callback
 
 logging:
   level:
@@ -39,3 +39,13 @@ toss:
     test-secret-key: "test_sk_jExPeJWYVQpqOBQLoa4E349R5gvN"
     success-url: "http://localhost:8080/payment/success"
     fail-url: "http://localhost:8080/payment/fail"
+
+crawler:
+  kca:
+    baseUrl: "https://counselors.or.kr"
+    listPath: "/KOR/license/supervisor_6.php"
+    timeoutMs: 8000
+    minDelayMs: 800
+    maxDelayMs: 1500
+    maxPages: 200
+    userAgent: "MindNoteCrawler/1.0 (+https://your-service.example) Mozilla/5.0"

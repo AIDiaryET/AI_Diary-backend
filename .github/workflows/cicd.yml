@@ -70,6 +70,12 @@ jobs:
           printf "POSTGRES_URL=%s\n"     "${{ secrets.POSTGRES_URL }}" >> .env
           printf "POSTGRES_USER=%s\n"    "${{ secrets.POSTGRES_USER }}" >> .env
           printf "POSTGRES_PASSWORD=%s\n" "${{ secrets.POSTGRES_PASSWORD }}" >> .env
+          printf "KAKAO_CLIENT_ID=%s\n"       "${{ secrets.KAKAO_CLIENT_ID }}" >> .env
+          printf "KAKAO_REDIRECT_URL=%s\n"       "${{ secrets.KAKAO_REDIRECT_URL }}" >> .env
+          printf "TOSS_CLIENT_KEY=%s\n"       "${{ secrets.TOSS_CLIENT_KEY }}" >> .env
+          printf "TOSS_SECRET_KEY=%s\n"       "${{ secrets.TOSS_SECRET_KEY }}" >> .env
+          printf "TOSS_SUCCESS_URL=%s\n"       "${{ secrets.TOSS_SUCCESS_URL }}" >> .env
+          printf "TOSS_FAIL_URL=%s\n"       "${{ secrets.TOSS_FAIL_URL }}" >> .env
           printf "JWT_SECRET=%s\n"       "${{ secrets.JWT_SECRET }}" >> .env
         
       - name: Upload compose & env to EC2
