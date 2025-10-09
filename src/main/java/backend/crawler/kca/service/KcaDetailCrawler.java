@@ -11,8 +11,8 @@ import org.jsoup.nodes.Document;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.List;
+import static backend.crawler.kca.util.ParseUtils.normalizeSpecialty;
 
 @Slf4j
 @Service
@@ -57,7 +57,10 @@ public class KcaDetailCrawler {
 
                     // 대상/전문분야
                     if (d.targets != null)   e.setTargets(CrawlUtil.joinDistinct(e.getTargets(), d.targets, " | "));
-                    if (d.specialty != null) e.setSpecialty(CrawlUtil.joinDistinct(e.getSpecialty(), d.specialty, " | "));
+                    if (d.specialty != null) {
+                        String norm = normalizeSpecialty(d.specialty); // 예: "A,B... | C/D/E" -> "C/D/E"
+                        if (norm != null) e.setSpecialty(norm);
+                    }
 
                     // 지역(상담가능장소 요약)
                     if (d.regions != null)   e.setRegions(CrawlUtil.joinDistinct(e.getRegions(), d.regions, " | "));
@@ -94,7 +97,10 @@ public class KcaDetailCrawler {
                         if (d.licenseNo != null) e.setLicenseNo(d.licenseNo);
                         if (d.licenseType != null) e.setLicenseType(d.licenseType);
                         if (d.targets != null)   e.setTargets(CrawlUtil.joinDistinct(e.getTargets(), d.targets, " | "));
-                        if (d.specialty != null) e.setSpecialty(CrawlUtil.joinDistinct(e.getSpecialty(), d.specialty, " | "));
+                        if (d.specialty != null) {
+                            String norm = normalizeSpecialty(d.specialty);
+                            if (norm != null) e.setSpecialty(norm);
+                        }
                         if (d.regions != null)   e.setRegions(CrawlUtil.joinDistinct(e.getRegions(), d.regions, " | "));
                         if (d.fee != null)       e.setFee(d.fee);
                         return true;
