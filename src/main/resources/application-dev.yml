@@ -1,0 +1,41 @@
+spring:
+  jpa:
+    show_sql: true
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/diary_backend
+    username: ${POSTGRES_USER_L}
+    password: ${POSTGRES_PASSWORD_L}
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 2
+
+  jackson:
+    default-property-inclusion: non_null
+    deserialization:
+      fail-on-unknown-properties: false
+
+  jwt:
+    secret: ${JWT_SECRET}
+
+kakao:
+  client-id: 4e0c59caebb74f7aa52dd26325f55b92
+  redirect-url: http://localhost:8080/auth/kakao/callback
+
+logging:
+  level:
+    backend: DEBUG
+
+toss:
+  payments:
+    test-client-key: "test_ck_DnyRpQWGrNDy9KdjloBL3Kwv1M9E"
+    test-secret-key: "test_sk_jExPeJWYVQpqOBQLoa4E349R5gvN"
+    success-url: "http://localhost:8080/payment/success"
+    fail-url: "http://localhost:8080/payment/fail"

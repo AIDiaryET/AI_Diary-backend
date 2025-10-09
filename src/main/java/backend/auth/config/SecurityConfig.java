@@ -81,28 +81,77 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .cors(withDefaults())
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                 .authorizeHttpRequests(auth -> auth
+
+                        .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/login").permitAll()
+
+
+                        .requestMatchers("/api/orders/**").permitAll()
+                        .requestMatchers("/payment/**").permitAll()
+                        .requestMatchers("/success", "/fail").permitAll()
+                        .requestMatchers("/test/**").permitAll()
+
+
+                        .requestMatchers("/", "/index.html").permitAll()
+                        .requestMatchers("/css/**", "/js/**", "/images/**", "/favicon.ico").permitAll()
+                        .requestMatchers("/assets/**").permitAll()
+
+
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+
+
                         .requestMatchers("/h2-console/**").permitAll()
-                        .anyRequest().permitAll() // 🔓 모든 요청 허용
+
+
+                        .requestMatchers("/ws/**").permitAll()
+
+
+                        .requestMatchers("/splash", "/register", "/mypage").permitAll()
+                        .requestMatchers("/notifications/test-send").permitAll()
+                        .requestMatchers("/notifications/*/fcm-token").permitAll()
+                        .requestMatchers("/v1/**").permitAll()
+
+
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
+
+
+                        .requestMatchers("/openchat/**", "/private/**", "/user/**").hasAnyRole("USER", "ADMIN")
+
+
+                        .anyRequest().authenticated()
+                )
+                .formLogin(form -> form
+                        .loginPage("/login")
+                        .permitAll()
+                )
+                .logout(logout -> logout
+                        .permitAll()
                 )
                 .exceptionHandling(config -> config
                         .authenticationEntryPoint(new Http403ForbiddenEntryPoint())
                         .accessDeniedHandler(accessDeniedHandler())
                 )
-                .headers(headers -> headers.frameOptions(frame -> frame.disable()));
+                .headers(headers -> headers
+                        .frameOptions(frame -> frame.sameOrigin())
+                );
 
         http.addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
+
     // CORS 설정
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(List.of(
                 "http://localhost:8080",
-                "http://localhost:5173"
+                "http://localhost:5173",
+                "http://3.34.67.51:8080",
+                "http:/13.209.88.34:8080"
         ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));

@@ -8,10 +8,9 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
 
-
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:5432/diary_backend
+    url: ${POSTGRES_URL}
     username: ${POSTGRES_USER}
     password: ${POSTGRES_PASSWORD}
     hikari:
@@ -19,6 +18,9 @@ spring:
       minimum-idle: 2
 
   jackson:
+    default-property-inclusion: non_null
+    deserialization:
+      fail-on-unknown-properties: false
     serialization:
       WRITE_DATES_AS_TIMESTAMPS: false
 
@@ -32,18 +34,22 @@ crawler:
     maxPages: 200
     userAgent: "MindNoteCrawler/1.0 (+https://your-service.example) Mozilla/5.0"
 
+
   jwt:
     secret: ${JWT_SECRET}
 
-aws:
-  s3:
-    accessKey: ${AWS_ACCESS_KEY_ID}
-    secretKey: ${AWS_SECRET_ACCESS_KEY}
-    region: ${AWS_REGION}
-    bucketName: ${AWS_S3_BUCKET_NAME}
+kakao:
+  client-id: ${KAKAO_CLIENT_ID}
+  redirect-url: ${KAKAO_REDIRECT_URL}
 
+toss:
+  payments:
+    client-key: ${TOSS_CLIENT_KEY}
+    secret-key: ${TOSS_SECRET_KEY}
+    success-url: ${TOSS_SUCCESS_URL}
+    fail-url: ${TOSS_FAIL_URL}
 
 logging:
   level:
     root: INFO
-    com.example.crawler.kca: DEBUG   # 우리 크롤러 패키지 상세 로그
+    com.mindnote.crawler.kca: DEBUG   # 우리 크롤러 패키지 상세 로그
