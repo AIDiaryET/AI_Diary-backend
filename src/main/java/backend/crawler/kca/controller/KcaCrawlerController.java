@@ -26,7 +26,7 @@ import java.time.LocalDateTime;
 @RestController
 @RequestMapping("/api/admin/crawler/kca")
 @RequiredArgsConstructor
-@Tag(name = "🧭 KCA 크롤러", description = "한국상담심리학회(KCA) 크롤링 및 월간 스케줄 관리 API")
+@Tag(name = "KCA 크롤러", description = "한국상담심리학회(KCA) 크롤링 및 월간 스케줄 관리 API")
 public class KcaCrawlerController {
 
     private final KcaListCrawler listCrawler;
