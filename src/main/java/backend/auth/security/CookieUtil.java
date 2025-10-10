@@ -24,7 +24,7 @@ public class CookieUtil {
                 .httpOnly(true)
                 .secure(false)
                 .path("/")
-                .sameSite("None")
+                .sameSite("Lax")
                 .maxAge(172800) // 2일
                 .build();
 
@@ -36,7 +36,7 @@ public class CookieUtil {
                 .httpOnly(true)
                 .secure(false)
                 .path("/")
-                .sameSite("None")
+                .sameSite("Lax")
                 .maxAge(0)
                 .build();
 
